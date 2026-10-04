@@ -366,7 +366,10 @@ async function load() {
 
 async function poll() {
   let st;
-  try { st = await backend.runState(); } catch (e) { $("run-state").textContent = "Not reachable"; return (poll.t = setTimeout(poll, 15000)); }
+  try { st = await backend.runState(); } catch (e) {
+    $("run-state").textContent = e.status === 404 ? "Generate is unavailable: the workflow was not found on GitHub." : "Not reachable";
+    return (poll.t = setTimeout(poll, e.status === 404 ? 300000 : 15000));
+  }
   $("gen").disabled = st.running;
   if (st.running) {
     const mins = st.started ? Math.floor((Date.now() / 1000 - st.started) / 60) : null;
