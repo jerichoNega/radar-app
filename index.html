@@ -111,6 +111,15 @@ dd { margin: 2px 0 0; max-width: 65ch; }
 .note { flex: 1 1 200px; min-width: 0; font: 0.85rem var(--f-body); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 6px 2px; }
 .note::placeholder { color: var(--muted); }
 
+.more { display: grid; gap: 12px; }
+.more summary { font: 600 0.72rem var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); cursor: pointer; padding: 4px 0; list-style: none; }
+.more summary::-webkit-details-marker { display: none; }
+.more summary::before { content: "+ "; }
+.more[open] summary::before { content: "− "; }
+.more summary:hover { color: var(--ink); }
+.more[open] summary { margin-bottom: 12px; }
+.more .checks { margin-bottom: 12px; }
+
 .also ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
 .also li { display: grid; gap: 2px; }
 .also .note-text { color: var(--muted); font-size: 0.9rem; }
@@ -164,6 +173,8 @@ const link = l => l && l.url ? `<a href="${esc(safeUrl(l.url))}" target="_blank"
 const niceDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 let db = null, briefs = [], ledger = {}, current = null, readOnly = false;
+// Details toggles that are open, so live re-renders keep them open
+const openDetails = new Set();
 try { current = localStorage.getItem("radar.week"); } catch (e) {}
 
 function toast(msg) {
@@ -193,24 +204,27 @@ function renderCard(c, i) {
         <span class="chip verdict">${esc(c.verdict)}</span>
       </div>
       <h2>${i + 1}. ${esc(c.name)}</h2>
-      <div class="checks" aria-label="Filter checks passed">${CHECKS.map(([k, l]) => `<span class="${checks.has(k) ? "on" : ""}">${l}</span>`).join("")}</div>
     </div>
-    <dl>
-      <div><dt>What it is</dt><dd>${fmt(c.what)}</dd></div>
-      <div><dt>Why it matters to you</dt><dd>${fmt(c.why)}</dd></div>
-      <div><dt>Signal</dt><dd>${fmt(c.signal)}</dd></div>
-      <div><dt>Overview</dt><dd>${link(c.overview)}${c.deep ? ` <span style="color:var(--muted)">· deep dive:</span> ${link(c.deep)}` : ""}</dd></div>
-    </dl>
     <div class="do">
       <div class="do-head"><span class="timer">15:00</span><span class="label" style="margin:0">Do it today</span></div>
       <ol>${(c.steps || []).map(s => `<li>${fmt(s)}</li>`).join("")}</ol>
     </div>
-    <dl><div><dt>Fits your workflow</dt><dd>${fmt(c.fits)}</dd></div></dl>
     <div class="status">
       <div class="seg" role="group" aria-label="Status">${STATUSES.map(([k, l]) =>
         `<button type="button" data-s="${k}" aria-pressed="${status === k}" ${readOnly ? "disabled" : ""}>${l}</button>`).join("")}</div>
       <input class="note" id="note-${esc(c.id)}" placeholder="Note: what happened when you tried it" value="${esc(row.note || "")}" ${readOnly ? "disabled" : ""}>
     </div>
+    <details class="more" data-id="${esc(c.id)}" ${openDetails.has(c.id) ? "open" : ""}>
+      <summary>Details</summary>
+      <div class="checks" aria-label="Filter checks passed">${CHECKS.map(([k, l]) => `<span class="${checks.has(k) ? "on" : ""}">${l}</span>`).join("")}</div>
+      <dl>
+        <div><dt>What it is</dt><dd>${fmt(c.what)}</dd></div>
+        <div><dt>Why it matters to you</dt><dd>${fmt(c.why)}</dd></div>
+        <div><dt>Signal</dt><dd>${fmt(c.signal)}</dd></div>
+        <div><dt>Overview</dt><dd>${link(c.overview)}${c.deep ? ` <span style="color:var(--muted)">· deep dive:</span> ${link(c.deep)}` : ""}</dd></div>
+        <div><dt>Fits your workflow</dt><dd>${fmt(c.fits)}</dd></div>
+      </dl>
+    </details>
   </article>`;
 }
 
@@ -406,6 +420,11 @@ document.addEventListener("click", e => {
     if ((ledger[id] || {}).status !== s.dataset.s) save(id, { status: s.dataset.s });
   }
 });
+document.addEventListener("toggle", e => {
+  const d = e.target;
+  if (d.matches && d.matches("details.more")) d.open ? openDetails.add(d.dataset.id) : openDetails.delete(d.dataset.id);
+}, true);
+
 document.addEventListener("change", e => {
   if (!e.target.classList.contains("note") || !db || readOnly) return;
   const id = e.target.closest(".card").dataset.id;
