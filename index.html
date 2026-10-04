@@ -1,0 +1,434 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column. Header with week switcher and adoption meter, then the week's cards, then the long tail. */
+:root {
+  --bg: #EDF0EE;
+  --surface: #F9FBFA;
+  --ink: #15201C;
+  --muted: #5A6762;
+  --line: #D2D9D5;
+  --agents: #2847B5;
+  --gtm: #9A600C;
+  --adopted: #2B7A4B;
+  --tried: #2847B5;
+  --open: #A86A12;
+  --skipped: #7B8681;
+  --code-bg: #E3E8E5;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --f-body: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1412; --surface: #151D1A; --ink: #E2E9E5; --muted: #95A39D; --line: #27332E;
+    --agents: #93A9FF; --gtm: #E2A64C; --adopted: #6CC892; --tried: #93A9FF; --open: #E2A64C;
+    --skipped: #85918C; --code-bg: #1E2824; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1412; --surface: #151D1A; --ink: #E2E9E5; --muted: #95A39D; --line: #27332E;
+  --agents: #93A9FF; --gtm: #E2A64C; --adopted: #6CC892; --tried: #93A9FF; --open: #E2A64C;
+  --skipped: #85918C; --code-bg: #1E2824; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); }
+.wrap { max-width: 760px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
+a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
+a:hover { text-decoration-color: currentColor; }
+:focus-visible { outline: 2px solid var(--agents); outline-offset: 2px; border-radius: 4px; }
+code { font: 0.86em var(--f-mono); background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+header { display: grid; gap: 14px; }
+.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+h1 { font: 700 2.1rem/1 var(--f-display); letter-spacing: -0.02em; margin: 0; }
+.week { font: 500 0.95rem var(--f-display); color: var(--muted); }
+.weeks { display: flex; flex-wrap: wrap; gap: 6px; }
+.weeks button { font: 0.8rem var(--f-mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.weeks button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.meter { display: grid; gap: 8px; }
+.bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--line); }
+.bar span { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font: 0.8rem var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend b { color: var(--ink); font-weight: 600; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+
+.label { font: 600 0.72rem var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
+
+.carry { display: grid; gap: 6px; padding: 14px 16px; border: 1px dashed var(--open); border-radius: 10px; }
+.carry .label { color: var(--open); margin: 0 0 4px; }
+.carry-row { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.carry-row .age { font: 0.75rem var(--f-mono); color: var(--muted); }
+
+.cards { display: grid; gap: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.card-head { display: grid; gap: 8px; }
+.card h2 { font: 700 1.3rem/1.2 var(--f-display); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { font: 600 0.7rem var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.chip.agents { color: var(--agents); }
+.chip.gtm { color: var(--gtm); }
+.chip.verdict { color: var(--ink); border-color: var(--line); background: var(--bg); }
+.checks { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 0.72rem var(--f-mono); color: var(--muted); }
+.checks span::before { content: "○ "; }
+.checks span.on { color: var(--ink); }
+.checks span.on::before { content: "● "; color: var(--adopted); }
+
+dl { margin: 0; display: grid; gap: 10px; }
+dt { font: 600 0.72rem var(--f-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+dd { margin: 2px 0 0; max-width: 65ch; }
+
+.do { background: var(--bg); border-radius: 10px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.do-head { display: flex; align-items: center; gap: 10px; }
+.timer { font: 600 0.8rem var(--f-mono); padding: 2px 8px; border-radius: 6px; background: var(--ink); color: var(--bg); font-variant-numeric: tabular-nums; }
+.do ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+.status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 600 0.8rem var(--f-body); padding: 6px 12px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"][data-s="open"] { background: var(--open); color: var(--surface); }
+.seg button[aria-pressed="true"][data-s="tried"] { background: var(--tried); color: var(--surface); }
+.seg button[aria-pressed="true"][data-s="adopted"] { background: var(--adopted); color: var(--surface); }
+.seg button[aria-pressed="true"][data-s="skipped"] { background: var(--skipped); color: var(--surface); }
+.seg button:disabled { cursor: default; opacity: 0.6; }
+.note { flex: 1 1 200px; min-width: 0; font: 0.85rem var(--f-body); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 6px 2px; }
+.note::placeholder { color: var(--muted); }
+
+.also ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.also li { display: grid; gap: 2px; }
+.also .note-text { color: var(--muted); font-size: 0.9rem; }
+.direction { border-left: 3px solid var(--gtm); padding: 4px 0 4px 14px; max-width: 65ch; }
+.foot { font: 0.75rem var(--f-mono); color: var(--muted); }
+.empty { padding: 32px 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); display: grid; gap: 6px; }
+.empty strong { color: var(--ink); font: 700 1.1rem var(--f-display); }
+.gen { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.gen button { font: 600 0.85rem var(--f-body); padding: 8px 14px; border-radius: 8px; border: 0; background: var(--ink); color: var(--bg); cursor: pointer; }
+.gen button:disabled { opacity: 0.55; cursor: default; }
+.gen .run-state { font: 0.8rem var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); font: 0.85rem var(--f-body); padding: 8px 14px; border-radius: 8px; }
+@media (prefers-reduced-motion: no-preference) {
+  .seg button, .weeks button { transition: background-color .15s, color .15s; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <h1>Radar</h1>
+      <span class="week" id="week">Loading briefs…</span>
+    </div>
+    <div class="gen">
+      <button type="button" id="gen">Generate new brief</button>
+      <span class="run-state" id="run-state" role="status"></span>
+    </div>
+    <nav class="weeks" id="weeks" aria-label="Briefs"></nav>
+    <div class="meter" id="meter" hidden>
+      <div class="bar" id="bar"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </header>
+  <main id="main" class="wrap" style="padding:0;max-width:none">
+    <div class="empty">
+      <strong>Your weekly brief shows up here</strong>
+      <span>Press <b>Generate new brief</b>, or run <code>/radar</code> in <code>~/radar</code>. Each run adds up to three things worth trying, each with a 15-minute action.</span>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const STATUSES = [["open", "Open"], ["tried", "Tried"], ["adopted", "Adopted"], ["skipped", "Skipped"]];
+const CHECKS = [["trusted", "trusted source"], ["cross", "cross-signal"], ["usable", "usable now"], ["adoption", "adoption"]];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+const safeUrl = u => /^https?:\/\//.test(u || "") ? u : "#";
+const link = l => l && l.url ? `<a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a>` : "";
+const niceDate = d => new Date(d + "T12:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+let db = null, briefs = [], ledger = {}, current = null, readOnly = false;
+try { current = localStorage.getItem("radar.week"); } catch (e) {}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 1800);
+}
+
+function renderMeter() {
+  const items = Object.values(ledger);
+  if (!items.length) { $("meter").hidden = true; return; }
+  const n = s => items.filter(i => i.status === s).length;
+  const order = ["adopted", "tried", "open", "skipped"];
+  $("bar").innerHTML = order.map(s => n(s) ? `<span style="flex:${n(s)};background:var(--${s})"></span>` : "").join("");
+  $("legend").innerHTML = order.map(s => `<span><i class="dot" style="background:var(--${s})"></i>${s[0].toUpperCase() + s.slice(1)} <b>${n(s)}</b></span>`).join("")
+    + `<span>Adoption rate <b>${Math.round(100 * n("adopted") / items.length)}%</b></span>`;
+  $("meter").hidden = false;
+}
+
+function renderCard(c, i) {
+  const row = ledger[c.id] || {};
+  const status = row.status || "open";
+  const checks = new Set(c.checks || []);
+  return `<article class="card" data-id="${esc(c.id)}">
+    <div class="card-head">
+      <div class="chips">
+        <span class="chip ${c.track === "gtm" ? "gtm" : "agents"}">${esc(c.track)}</span>
+        <span class="chip verdict">${esc(c.verdict)}</span>
+      </div>
+      <h2>${i + 1}. ${esc(c.name)}</h2>
+      <div class="checks" aria-label="Filter checks passed">${CHECKS.map(([k, l]) => `<span class="${checks.has(k) ? "on" : ""}">${l}</span>`).join("")}</div>
+    </div>
+    <dl>
+      <div><dt>What it is</dt><dd>${fmt(c.what)}</dd></div>
+      <div><dt>Why it matters to you</dt><dd>${fmt(c.why)}</dd></div>
+      <div><dt>Signal</dt><dd>${fmt(c.signal)}</dd></div>
+      <div><dt>Overview</dt><dd>${link(c.overview)}${c.deep ? ` <span style="color:var(--muted)">· deep dive:</span> ${link(c.deep)}` : ""}</dd></div>
+    </dl>
+    <div class="do">
+      <div class="do-head"><span class="timer">15:00</span><span class="label" style="margin:0">Do it today</span></div>
+      <ol>${(c.steps || []).map(s => `<li>${fmt(s)}</li>`).join("")}</ol>
+    </div>
+    <dl><div><dt>Fits your workflow</dt><dd>${fmt(c.fits)}</dd></div></dl>
+    <div class="status">
+      <div class="seg" role="group" aria-label="Status">${STATUSES.map(([k, l]) =>
+        `<button type="button" data-s="${k}" aria-pressed="${status === k}" ${readOnly ? "disabled" : ""}>${l}</button>`).join("")}</div>
+      <input class="note" id="note-${esc(c.id)}" placeholder="Note: what happened when you tried it" value="${esc(row.note || "")}" ${readOnly ? "disabled" : ""}>
+    </div>
+  </article>`;
+}
+
+function render() {
+  const nav = $("weeks");
+  if (!briefs.length) { nav.innerHTML = ""; $("week").textContent = "No briefs yet"; renderMeter(); return; }
+  if (!briefs.find(b => b.id === current)) current = briefs[0].id;
+  const b = briefs.find(x => x.id === current);
+  $("week").textContent = "Brief of " + niceDate(b.date);
+  nav.innerHTML = briefs.length > 1 ? briefs.map(x => `<button type="button" data-week="${esc(x.id)}" aria-pressed="${x.id === current}">${esc(x.date)}</button>`).join("") : "";
+  renderMeter();
+
+  const carry = Object.entries(ledger)
+    .filter(([, r]) => r.status === "open" && r.added < b.date)
+    .sort((a, z) => a[1].added.localeCompare(z[1].added)).slice(0, 3);
+  const days = d => Math.round((new Date(b.date) - new Date(d)) / 864e5);
+
+  // Keep focus and unsaved note text across live re-renders
+  const active = document.activeElement && document.activeElement.id;
+  const drafts = {};
+  document.querySelectorAll(".note").forEach(n => { if (n === document.activeElement) drafts[n.id] = n.value; });
+
+  $("main").innerHTML = `
+    ${carry.length ? `<section class="carry"><p class="label">Still open from before</p>${carry.map(([, r]) =>
+      `<div class="carry-row"><span>${esc(r.name)}</span><span class="age">${days(r.added)} days open</span></div>`).join("")}</section>` : ""}
+    <section><p class="label">This week</p><div class="cards">${(b.cards || []).map(renderCard).join("") ||
+      `<div class="empty"><strong>Nothing passed the filter this week</strong><span>That is fine. Use the time on what is still open.</span></div>`}</div></section>
+    ${(b.also || []).length ? `<section class="also"><p class="label">Also noticed</p><ul>${b.also.map(a =>
+      `<li>${link(a)}${a.note ? `<span class="note-text">${fmt(a.note)}</span>` : ""}</li>`).join("")}</ul></section>` : ""}
+    ${b.direction ? `<section><p class="label">Direction check</p><p class="direction">${fmt(b.direction)}</p></section>` : ""}
+    <p class="foot">Source errors: ${(b.errors || []).length ? esc(b.errors.join("; ")) : "none"}</p>`;
+
+  for (const [id, v] of Object.entries(drafts)) { const n = $(id); if (n) n.value = v; }
+  if (active && $(active)) $(active).focus();
+}
+
+// Two backends with one interface. On localhost the page talks to server.py.
+// Anywhere else (GitHub Pages) it talks to the private repo through the GitHub API,
+// with a fine-grained token pasted once per device.
+const GH = { repo: "jerichoNega/radar", branch: "master", workflow: "radar.yml" };
+const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+let token = null;
+try { token = localStorage.getItem("radar.token"); } catch (e) {}
+
+async function api(path, opts) {
+  const r = await fetch(path, opts && { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(opts) });
+  const data = await r.json();
+  if (!r.ok) throw Object.assign(new Error(data.error || r.status), { status: r.status });
+  return data;
+}
+
+async function gh(path, { method = "GET", body, raw } = {}) {
+  const r = await fetch(`https://api.github.com/repos/${GH.repo}${path}`, {
+    method, cache: "no-store",
+    headers: { Authorization: "Bearer " + token, Accept: raw ? "application/vnd.github.raw+json" : "application/vnd.github+json",
+               "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body && JSON.stringify(body),
+  });
+  if (r.status === 401) { forgetToken(); throw Object.assign(new Error("bad token"), { status: 401 }); }
+  if (!r.ok) throw Object.assign(new Error(r.status), { status: r.status });
+  return r.status === 204 ? null : raw ? r.text() : r.json();
+}
+
+const b64decode = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g, "")), c => c.charCodeAt(0)));
+const b64encode = s => { let out = ""; for (const b of new TextEncoder().encode(s)) out += String.fromCharCode(b); return btoa(out); };
+
+// Same parsing as server.py: ledger.md stays the source of truth.
+const ROW = /^\|\s*(\d{4}-\d{2}-\d{2})\s*\|(.*)\|\s*$/;
+const STATUS_SET = new Set(STATUSES.map(([k]) => k));
+function ledgerRows(text) {
+  return text.split("\n").map((line, i) => {
+    const m = line.match(ROW);
+    const cells = m && [m[1], ...m[2].split("|").map(c => c.trim())];
+    return cells && cells.length === 5 ? { i, cells } : null;
+  }).filter(Boolean);
+}
+function cardOf(id) {
+  for (const b of briefs) for (const c of b.cards || []) if (c.id === id) return { added: b.date, c };
+  return null;
+}
+function ledgerFrom(text) {
+  const out = {};
+  for (const { cells: [added, name, track, status, note] } of ledgerRows(text)) {
+    for (const b of briefs) if (b.date === added) for (const c of b.cards || []) if (c.name === name)
+      out[c.id] = { added, name, track, status, note: note === c.verdict ? "" : note };
+  }
+  return out;
+}
+function patchLedger(text, id, patch) {
+  const { added, c } = cardOf(id);
+  const lines = text.replace(/\n$/, "").split("\n");
+  const hit = ledgerRows(text).find(r => r.cells[0] === added && r.cells[1] === c.name);
+  const cells = hit ? hit.cells : [added, c.name, c.track, "open", c.verdict || ""];
+  if (STATUS_SET.has(patch.status)) cells[3] = patch.status;
+  if ("note" in patch) cells[4] = String(patch.note).replace(/\|/g, "/").split(/\s+/).join(" ").trim().slice(0, 300);
+  const row = "| " + cells.join(" | ") + " |";
+  hit ? (lines[hit.i] = row) : lines.push(row);
+  return lines.join("\n") + "\n";
+}
+
+let dispatchedAt = 0;
+const backend = LOCAL ? {
+  briefs: () => api("/api/briefs"),
+  ledger: () => api("/api/ledger"),
+  save: (id, patch) => api("/api/ledger/" + encodeURIComponent(id), patch),
+  start: () => api("/api/run", {}),
+  runState: async () => ({ ...(await api("/api/run")), where: "See logs/ for details." }),
+} : {
+  async briefs() {
+    const files = (await gh(`/contents/briefs?ref=${GH.branch}`)).filter(f => f.name.endsWith(".json"));
+    const all = await Promise.all(files.map(f => gh(`/contents/${f.path}?ref=${GH.branch}`, { raw: true }).then(JSON.parse).catch(() => null)));
+    return all.filter(Boolean).sort((a, z) => z.date.localeCompare(a.date));
+  },
+  async ledger() {
+    return ledgerFrom(await gh(`/contents/ledger.md?ref=${GH.branch}`, { raw: true }));
+  },
+  async save(id, patch) {
+    if (!cardOf(id)) throw Object.assign(new Error("unknown card"), { status: 404 });
+    for (let attempt = 0; ; attempt++) {
+      const f = await gh(`/contents/ledger.md?ref=${GH.branch}`);
+      const text = patchLedger(b64decode(f.content), id, patch);
+      try {
+        await gh("/contents/ledger.md", { method: "PUT", body: {
+          message: `ledger: ${cardOf(id).c.name} ${patch.status || "note"}`, content: b64encode(text), sha: f.sha, branch: GH.branch } });
+        return ledgerFrom(text);
+      } catch (e) { if (e.status !== 409 || attempt) throw e; }  // someone else wrote it in between: reread once
+    }
+  },
+  async start() {
+    await gh(`/actions/workflows/${GH.workflow}/dispatches`, { method: "POST", body: { ref: GH.branch } });
+    dispatchedAt = Date.now();
+  },
+  async runState() {
+    const run = (await gh(`/actions/workflows/${GH.workflow}/runs?per_page=1`)).workflow_runs[0];
+    // A dispatched run takes a few seconds to show up in the list
+    const pending = dispatchedAt && Date.now() - dispatchedAt < 90000 && (!run || Date.parse(run.created_at) < dispatchedAt - 5000);
+    if (pending) return { running: true, started: dispatchedAt / 1000, code: null };
+    if (!run) return { running: false, code: null };
+    const done = run.status === "completed";
+    return { running: !done, started: Date.parse(run.run_started_at || run.created_at) / 1000,
+             code: done && run.conclusion !== "success" ? run.conclusion : null, where: "See the Actions tab on GitHub." };
+  },
+};
+
+let wasRunning = false;
+async function save(id, patch) {
+  if (wasRunning) return toast("A brief is being generated. Save again when it is done.");
+  try {
+    ledger = await backend.save(id, patch);
+    render();
+    toast(patch.status ? `Marked ${patch.status}` : "Note saved");
+  } catch (e) {
+    toast(e.status === 409 ? "A brief is being generated. Save again when it is done." : "Could not save. Check the connection.");
+  }
+}
+
+async function load() {
+  briefs = (await backend.briefs()).map(b => ({ id: b.date, ...b }));
+  ledger = await backend.ledger();
+  render();
+}
+
+async function poll() {
+  let st;
+  try { st = await backend.runState(); } catch (e) { $("run-state").textContent = "Not reachable"; return (poll.t = setTimeout(poll, 15000)); }
+  $("gen").disabled = st.running;
+  if (st.running) {
+    const mins = st.started ? Math.floor((Date.now() / 1000 - st.started) / 60) : null;
+    $("run-state").textContent = "Generating" + (mins !== null ? `, ${mins} min so far` : "") + ". Usually takes 5 to 15 min.";
+  } else {
+    $("run-state").textContent = st.code ? `Last run failed (${st.code}). ${st.where || ""}` : "";
+    if (wasRunning) { current = null; await load(); toast("New brief ready"); }
+  }
+  wasRunning = st.running;
+  poll.t = setTimeout(poll, st.running ? 10000 : 30000);
+}
+
+$("gen").addEventListener("click", async () => {
+  $("gen").disabled = true;
+  try { await backend.start(); } catch (e) { if (e.status !== 409) toast("Could not start the run"); }
+  clearTimeout(poll.t); poll();
+});
+
+document.addEventListener("click", e => {
+  const w = e.target.closest("[data-week]");
+  if (w) { current = w.dataset.week; try { localStorage.setItem("radar.week", current); } catch (_) {} render(); return; }
+  const s = e.target.closest(".seg button");
+  if (s && db && !readOnly) {
+    const id = s.closest(".card").dataset.id;
+    if ((ledger[id] || {}).status !== s.dataset.s) save(id, { status: s.dataset.s });
+  }
+});
+document.addEventListener("change", e => {
+  if (!e.target.classList.contains("note") || !db || readOnly) return;
+  const id = e.target.closest(".card").dataset.id;
+  if ((ledger[id] || {}).note !== e.target.value) save(id, { note: e.target.value.trim() });
+});
+
+function forgetToken() {
+  token = null;
+  try { localStorage.removeItem("radar.token"); } catch (e) {}
+  askToken("That token did not work. Paste a new one.");
+}
+
+function askToken(msg) {
+  clearTimeout(poll.t);
+  $("week").textContent = "Connect to GitHub";
+  $("main").innerHTML = `<form class="empty" id="token-form">
+    <strong>${esc(msg || "One-time setup on this device")}</strong>
+    <span>Paste a fine-grained GitHub token with access to <code>${esc(GH.repo)}</code> only: Contents read and write, Actions read and write. It stays in this browser.</span>
+    <input class="note" id="token" type="password" autocomplete="off" placeholder="github_pat_…" required>
+    <div class="gen"><button type="submit">Save token</button></div>
+  </form>`;
+  $("token-form").addEventListener("submit", e => {
+    e.preventDefault();
+    token = $("token").value.trim();
+    try { localStorage.setItem("radar.token", token); } catch (_) {}
+    start();
+  });
+}
+
+function start() {
+  if (!LOCAL && !token) return askToken();
+  load().catch(e => { if (e.status !== 401) $("week").textContent = "Could not load briefs. Check the connection."; });
+  poll();
+}
+
+db = true;
+start();
+</script>
