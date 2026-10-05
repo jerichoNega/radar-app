@@ -186,6 +186,24 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 .note { flex: 1 1 220px; min-width: 0; font: 0.88rem var(--f-body); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--line-2); padding: 8px 2px; border-radius: 0; }
 .note:focus { outline: none; border-bottom-color: var(--ph); }
 .note::placeholder { color: var(--dim); }
+.proof-in { flex: 1 1 220px; min-width: 0; font: 0.88rem var(--f-body); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--line-2); padding: 8px 2px; border-radius: 0; }
+.proof-in:focus { outline: none; border-bottom-color: var(--adopted); }
+.proof-in::placeholder { color: var(--dim); }
+.proof { display: grid; gap: 2px; padding: 12px 14px 14px; border-left: 2px solid var(--adopted); background: var(--panel); }
+.proof .label { margin-bottom: 2px; color: var(--adopted); }
+.proof .label::after { display: none; }
+.proof-fields { display: flex; flex-wrap: wrap; gap: 0 16px; }
+
+/* Small square buttons: Do it now, Copy note, reminder */
+.mini { font: 500 0.72rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; padding: 9px 12px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); cursor: pointer; }
+.mini:hover:not(:disabled) { border-color: var(--ph); color: var(--ph); }
+.mini:active:not(:disabled) { transform: translateY(1px); }
+.mini:disabled { opacity: .5; cursor: default; }
+.mini.on { border-color: var(--ph); color: var(--ph); }
+.do-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding-top: 12px; border-top: 1px dashed var(--line-2); }
+.do-now { border-color: var(--ph); color: var(--ph); }
+.do-now:hover:not(:disabled) { background: var(--ph); color: #04120A; }
+.hint { font: 0.72rem var(--f-mono); color: var(--dim); letter-spacing: .04em; }
 
 /* ---------- Also / direction / footer ---------- */
 .also ol { margin: 0; padding: 0; list-style: none; counter-reset: a; }
@@ -193,6 +211,29 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 .also li::before { content: counter(a, decimal-leading-zero); grid-row: span 2; font: 0.72rem/1.9 var(--f-mono); color: var(--dim); }
 .also .note-text { color: var(--muted); font-size: 0.9rem; }
 .direction { margin: 0; max-width: 64ch; font-size: 1.02rem; }
+
+/* ---------- Rolled out / sources ---------- */
+.lede { margin: 0 0 14px; color: var(--muted); max-width: 64ch; font-size: 0.92rem; }
+.month { border-top: 1px solid var(--line-2); padding-top: 12px; }
+.month + .month { margin-top: 18px; }
+.month-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.month-head span { font: 700 1.1rem/1.2 var(--f-display); font-stretch: 106%; }
+.rollout ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.rollout li { display: grid; gap: 2px; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.rollout li:hover .name { color: #fff; }
+.rollout .proof-text { color: var(--muted); font-size: 0.9rem; overflow-wrap: anywhere; }
+.rollout .missing { color: var(--open); font: 0.7rem var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.score-wrap { overflow-x: auto; }
+.score { width: 100%; border-collapse: collapse; font: 0.8rem var(--f-mono); font-variant-numeric: tabular-nums; }
+.score th { text-align: right; font-weight: 500; font-size: 0.64rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 0 0 8px 10px; white-space: nowrap; }
+.score td { text-align: right; padding: 8px 0 8px 10px; border-top: 1px solid var(--line); color: var(--dim); }
+.score th:first-child, .score td:first-child { text-align: left; padding-left: 0; }
+.score td:first-child { color: var(--ink); font-family: var(--f-body); overflow-wrap: anywhere; }
+.score td.n { color: var(--ink); }
+.score td.a { color: var(--adopted); }
+.score td.s { color: var(--muted); }
+.quiet { margin: 12px 0 0; font: 0.74rem/1.6 var(--f-mono); color: var(--dim); }
+.quiet b { color: var(--muted); font-weight: 500; }
 .foot { margin: 0; font: 0.7rem/1.6 var(--f-mono); letter-spacing: .04em; color: var(--dim); }
 .foot b { color: var(--muted); font-weight: 500; }
 .empty { padding: 28px 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); color: var(--muted); display: grid; gap: 10px; }
@@ -276,6 +317,7 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
   <footer class="gen">
     <button type="button" id="gen">Generate new brief</button>
     <span class="run-state" id="run-state" role="status"></span>
+    <button type="button" class="mini" id="remind" hidden>Thursday reminder</button>
   </footer>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
@@ -374,6 +416,8 @@ function renderCard(c, i) {
       <div class="do">
         <div class="do-head"><span class="timer">15:00</span><span class="label bare" style="margin:0">Do it today</span></div>
         <ol>${(c.steps || []).map(s => `<li><span>${fmt(s)}</span></li>`).join("")}</ol>
+        <div class="do-actions"><button type="button" class="mini do-now" data-do="${esc(c.id)}">${LOCAL ? "Start in Claude Code" : "Copy for Claude Code"}</button>
+          <span class="hint">${LOCAL ? "Opens Terminal with these steps loaded" : "Paste it in a terminal on your Mac"}</span></div>
       </div>
       <dl class="intel">
         ${reads.map(r => reads.length === 1 ? r.replace("<div>", '<div class="wide">') : r).join("")}
@@ -386,6 +430,11 @@ function renderCard(c, i) {
           `<button type="button" data-s="${k}" aria-pressed="${status === k}" ${readOnly ? "disabled" : ""}>${l}</button>`).join("")}</div>
         <input class="note" id="note-${esc(c.id)}" placeholder="Note: what happened when you tried it" value="${esc(row.note || "")}" ${readOnly ? "disabled" : ""}>
       </div>
+      ${status === "adopted" ? (p => `<div class="proof"><p class="label">Proof${row.adopted ? ` · adopted ${esc(shortDate(row.adopted))}` : ""}</p>
+        <div class="proof-fields">
+          <input class="proof-in" id="proof-${esc(c.id)}" placeholder="What changed, in one line" value="${esc(p.text)}" ${readOnly ? "disabled" : ""}>
+          <input class="proof-in" id="prooflink-${esc(c.id)}" type="url" placeholder="Link: commit, skill, doc (optional)" value="${esc(p.url)}" ${readOnly ? "disabled" : ""}>
+        </div></div>`)(splitProof(row.proof)) : ""}
     </div></div>
   </article>`;
 }
@@ -412,7 +461,7 @@ function render() {
   // Keep focus and unsaved note text across live re-renders
   const active = document.activeElement && document.activeElement.id;
   const drafts = {};
-  document.querySelectorAll(".note").forEach(n => { if (n === document.activeElement) drafts[n.id] = n.value; });
+  document.querySelectorAll(".note, .proof-in").forEach(n => { if (n === document.activeElement) drafts[n.id] = n.value; });
 
   $("main").innerHTML = `
     ${carry.length ? `<section class="carry"><p class="label">Still open from before</p>${carry.map(([id, r]) =>
@@ -422,11 +471,85 @@ function render() {
     ${(b.also || []).length ? `<section class="also"><p class="label">Also noticed</p><ol>${b.also.map(a =>
       `<li>${link(a)}${a.note ? `<span class="note-text">${fmt(a.note)}</span>` : ""}</li>`).join("")}</ol></section>` : ""}
     ${b.direction ? `<section><p class="label">Direction check</p><p class="direction">${fmt(b.direction)}</p></section>` : ""}
+    ${renderRollout()}
+    ${renderScore()}
     <p class="foot"><b>SRC ERR</b> ${(b.errors || []).length ? esc(b.errors.join(" · ")) : "none"}</p>`;
 
   for (const [id, v] of Object.entries(drafts)) { const n = $(id); if (n) n.value = v; }
   if (active && $(active)) $(active).focus();
 }
+
+// Proof is one ledger cell: "what changed · link"
+const joinProof = (text, url) => [String(text).trim(), String(url).trim()].filter(Boolean).join(" · ");
+function splitProof(p) {
+  const m = String(p || "").match(/^(.*?)(?:\s*·\s*)?(https?:\/\/\S+)?$/);
+  return { text: (m[1] || "").trim(), url: m[2] || "" };
+}
+const monthName = m => new Date(m + "-01T12:00:00").toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+
+// Adopted items grouped by the month they were adopted, newest month first
+function rollouts() {
+  const by = {};
+  for (const [id, r] of Object.entries(ledger)) if (r.status === "adopted") (by[(r.adopted || r.added).slice(0, 7)] ||= []).push({ id, ...r });
+  return Object.entries(by).sort((a, z) => z[0].localeCompare(a[0]));
+}
+function rolloutNote(month, items) {
+  return `What I rolled out in ${monthName(month)}\n\n` + items.map(r => {
+    const p = splitProof(r.proof);
+    return `- ${r.name}${p.text ? `: ${p.text}` : ""}${p.url ? ` (${p.url})` : ""}`;
+  }).join("\n") + "\n";
+}
+function renderRollout() {
+  const months = rollouts();
+  return `<section class="rollout"><p class="label">Rolled out</p>${months.length ? `
+    <p class="lede">What you adopted, by month. Copy a month as a short note for colleagues.</p>
+    ${months.map(([m, items]) => `<div class="month"><div class="month-head"><span>${esc(monthName(m))}</span>
+      <button type="button" class="mini" data-copy-month="${esc(m)}">Copy note</button></div>
+      <ul>${items.map(r => { const p = splitProof(r.proof); return `<li data-blip="${esc(r.id)}" role="button" tabindex="0"><span class="name">${esc(r.name)}</span>
+        ${p.text || p.url ? `<span class="proof-text">${esc(p.text)}${p.url ? ` ${link({ url: p.url, label: p.text ? "link" : p.url })}` : ""}</span>` : `<span class="missing">No proof yet, tap to add</span>`}</li>`; }).join("")}</ul></div>`).join("")}`
+    : `<p class="lede">Nothing adopted yet. Mark a card Adopted and add one line on what changed. It collects here as a monthly note you can share.</p>`}</section>`;
+}
+
+// Source scorecard: card outcomes are live from briefs + ledger, item counts come from scorecard.py
+let scoreState = {};
+function renderScore() {
+  const rows = {};
+  const row = s => rows[s] ||= { items: 0, cards: 0, tried: 0, adopted: 0, skipped: 0 };
+  for (const [s, n] of Object.entries(scoreState.collected || {})) row(s).items = n;
+  for (const b of briefs) for (const c of b.cards || []) for (const s of c.sources || []) {
+    const r = row(s), st = (ledger[c.id] || {}).status || "open";
+    r.cards++; if (st in r) r[st]++;
+  }
+  const all = Object.entries(rows);
+  if (!all.length) return "";
+  const hits = all.filter(([, r]) => r.cards).sort((a, z) => z[1].adopted - a[1].adopted || z[1].tried - a[1].tried || z[1].cards - a[1].cards || z[1].items - a[1].items);
+  const quiet = all.filter(([, r]) => !r.cards).sort((a, z) => z[1].items - a[1].items);
+  const td = (n, cls) => `<td class="${n ? cls : ""}">${n}</td>`;
+  return `<section><p class="label">Sources</p>
+    <p class="lede">Which sources lead to things you adopt. The weekly run ranks by this and flags sources to drop.</p>
+    ${hits.length ? `<div class="score-wrap"><table class="score"><thead><tr><th>Source</th><th>Items</th><th>Cards</th><th>Tried</th><th>Adopt</th><th>Skip</th></tr></thead><tbody>
+      ${hits.map(([s, r]) => `<tr><td>${esc(s)}</td>${td(r.items, "s")}${td(r.cards, "n")}${td(r.tried, "n")}${td(r.adopted, "a")}${td(r.skipped, "s")}</tr>`).join("")}</tbody></table></div>` : ""}
+    ${quiet.length ? `<p class="quiet"><b>No card yet:</b> ${quiet.map(([s, r]) => `${esc(s)} (${r.items})`).join(" · ")}</p>` : ""}
+  </section>`;
+}
+
+// Do it now: the same prompt server.py's do_prompt() builds
+function doPrompt(c) {
+  const steps = (c.steps || []).map((s, i) => `${i + 1}. ${s}`).join("\n");
+  const read = c.overview && c.overview.url ? `\nRead first: ${c.overview.url}` : "";
+  return `Radar card: ${c.name}\n${c.what || ""}\n\nSteps (15 minutes):\n${steps}${read}\n\n` +
+    "Help me do these steps now, starting with step 1. If a step needs a project or site, ask me which one. " +
+    "Keep it to about 15 minutes. When we are done, give me one line on what changed, so I can log it as proof in Radar.";
+}
+const shellCmd = c => `claude '${doPrompt(c).replace(/'/g, `'\\''`)}'`;
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (_) {
+    const t = Object.assign(document.createElement("textarea"), { value: text, readOnly: true });
+    t.style.cssText = "position:fixed;opacity:0"; document.body.append(t); t.select();
+    const ok = document.execCommand("copy"); t.remove(); return ok;
+  }
+}
+const today = () => new Date().toLocaleDateString("sv");
 
 // Two backends with one interface. On localhost the page talks to server.py.
 // Anywhere else (GitHub Pages) it talks to the private repo through the GitHub API,
@@ -461,11 +584,13 @@ const b64encode = s => { let out = ""; for (const b of new TextEncoder().encode(
 // Same parsing as server.py: ledger.md stays the source of truth.
 const ROW = /^\|\s*(\d{4}-\d{2}-\d{2})\s*\|(.*)\|\s*$/;
 const STATUS_SET = new Set(STATUSES.map(([k]) => k));
+// Added | Item | Track | Status | Note | Adopted | Proof. Older rows have only the first 5.
+const COLS = 7;
 function ledgerRows(text) {
   return text.split("\n").map((line, i) => {
     const m = line.match(ROW);
     const cells = m && [m[1], ...m[2].split("|").map(c => c.trim())];
-    return cells && cells.length === 5 ? { i, cells } : null;
+    return cells && cells.length >= 5 && cells.length <= COLS ? { i, cells: [...cells, ...Array(COLS - cells.length).fill("")] } : null;
   }).filter(Boolean);
 }
 function cardOf(id) {
@@ -474,9 +599,9 @@ function cardOf(id) {
 }
 function ledgerFrom(text) {
   const out = {};
-  for (const { cells: [added, name, track, status, note] } of ledgerRows(text)) {
+  for (const { cells: [added, name, track, status, note, adopted, proof] } of ledgerRows(text)) {
     for (const b of briefs) if (b.date === added) for (const c of b.cards || []) if (c.name === name)
-      out[c.id] = { added, name, track, status, note: note === c.verdict ? "" : note };
+      out[c.id] = { added, name, track, status, note: note === c.verdict ? "" : note, adopted, proof };
   }
   return out;
 }
@@ -484,9 +609,15 @@ function patchLedger(text, id, patch) {
   const { added, c } = cardOf(id);
   const lines = text.replace(/\n$/, "").split("\n");
   const hit = ledgerRows(text).find(r => r.cells[0] === added && r.cells[1] === c.name);
-  const cells = hit ? hit.cells : [added, c.name, c.track, "open", c.verdict || ""];
-  if (STATUS_SET.has(patch.status)) cells[3] = patch.status;
-  if ("note" in patch) cells[4] = String(patch.note).replace(/\|/g, "/").split(/\s+/).join(" ").trim().slice(0, 300);
+  const cells = hit ? hit.cells : [added, c.name, c.track, "open", c.verdict || "", "", ""];
+  const clean = v => String(v).replace(/\|/g, "/").split(/\s+/).join(" ").trim().slice(0, 300);
+  if (STATUS_SET.has(patch.status)) {
+    cells[3] = patch.status;
+    // The adopted date dates the proof, for the monthly rollout note
+    cells[5] = patch.status === "adopted" ? cells[5] || today() : "";
+  }
+  if ("note" in patch) cells[4] = clean(patch.note);
+  if ("proof" in patch) cells[6] = clean(patch.proof);
   const row = "| " + cells.join(" | ") + " |";
   hit ? (lines[hit.i] = row) : lines.push(row);
   return lines.join("\n") + "\n";
@@ -499,7 +630,10 @@ const backend = LOCAL ? {
   save: (id, patch) => api("/api/ledger/" + encodeURIComponent(id), patch),
   start: () => api("/api/run", {}),
   runState: async () => ({ ...(await api("/api/run")), where: "See logs/ for details." }),
+  scorecard: () => api("/api/scorecard"),
+  launch: id => api("/api/do/" + encodeURIComponent(id), {}),
 } : {
+  scorecard: () => gh(`/contents/state/scorecard.json?ref=${GH.branch}`, { raw: true }).then(JSON.parse),
   async briefs() {
     const files = (await gh(`/contents/briefs?ref=${GH.branch}`)).filter(f => f.name.endsWith(".json"));
     const all = await Promise.all(files.map(f => gh(`/contents/${f.path}?ref=${GH.branch}`, { raw: true }).then(JSON.parse).catch(() => null)));
@@ -515,7 +649,7 @@ const backend = LOCAL ? {
       const text = patchLedger(b64decode(f.content), id, patch);
       try {
         await gh("/contents/ledger.md", { method: "PUT", body: {
-          message: `ledger: ${cardOf(id).c.name} ${patch.status || "note"}`, content: b64encode(text), sha: f.sha, branch: GH.branch } });
+          message: `ledger: ${cardOf(id).c.name} ${patch.status || ("proof" in patch ? "proof" : "note")}`, content: b64encode(text), sha: f.sha, branch: GH.branch } });
         return ledgerFrom(text);
       } catch (e) { if (e.status !== 409 || attempt) throw e; }  // someone else wrote it in between: reread once
     }
@@ -542,15 +676,17 @@ async function save(id, patch) {
   try {
     ledger = await backend.save(id, patch);
     render();
-    toast(patch.status ? `Marked ${patch.status}` : "Note saved");
+    toast(patch.status ? `Marked ${patch.status}` : "proof" in patch ? "Proof saved" : "Note saved");
   } catch (e) {
     toast(e.status === 409 ? "A brief is being generated. Save again when it is done." : "Could not save. Check the connection.");
   }
 }
 
 async function load() {
+  const score = backend.scorecard().catch(() => ({}));
   briefs = (await backend.briefs()).map(b => ({ id: b.date, ...b }));
   ledger = await backend.ledger();
+  scoreState = await score;
   render();
 }
 
@@ -583,8 +719,24 @@ document.addEventListener("click", e => {
   if (w) { current = w.dataset.week; try { localStorage.setItem("radar.week", current); } catch (_) {} render(); return; }
   const s = e.target.closest(".seg button");
   if (s && db && !readOnly) {
-    const id = s.closest(".card").dataset.id;
-    if ((ledger[id] || {}).status !== s.dataset.s) save(id, { status: s.dataset.s });
+    const id = s.closest(".card").dataset.id, st = s.dataset.s;
+    if ((ledger[id] || {}).status !== st) save(id, { status: st }).then(() => {
+      // Ask for proof straight away, while it is fresh
+      const r = ledger[id] || {};
+      if (st === "adopted" && r.status === "adopted" && !r.proof) { const p = $("proof-" + id); if (p) p.focus(); toast("Adopted. One line on what changed?"); }
+    });
+  }
+  const d = e.target.closest("[data-do]");
+  if (d) {
+    const hit = cardOf(d.dataset.do);
+    if (!hit) return;
+    if (LOCAL) backend.launch(d.dataset.do).then(() => toast("Opened in Terminal"), () => toast("Could not open Terminal"));
+    else copy(shellCmd(hit.c)).then(ok => toast(ok ? "Copied. Paste it in a terminal" : "Copy was blocked"));
+  }
+  const m = e.target.closest("[data-copy-month]");
+  if (m) {
+    const items = (rollouts().find(([k]) => k === m.dataset.copyMonth) || [, []])[1];
+    copy(rolloutNote(m.dataset.copyMonth, items)).then(ok => toast(ok ? "Note copied" : "Copy was blocked"));
   }
 });
 function focusItem(id) {
@@ -597,6 +749,7 @@ function focusItem(id) {
   if (el) el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 }
 document.addEventListener("click", e => {
+  if (e.target.closest("a")) return;
   const b = e.target.closest("[data-blip]");
   if (b) focusItem(b.dataset.blip);
 });
@@ -622,6 +775,12 @@ document.addEventListener("keydown", e => {
 });
 
 document.addEventListener("change", e => {
+  if (e.target.classList.contains("proof-in") && db && !readOnly) {
+    const id = e.target.closest(".card").dataset.id;
+    const proof = joinProof($("proof-" + id).value, $("prooflink-" + id).value);
+    if (((ledger[id] || {}).proof || "") !== proof) save(id, { proof });
+    return;
+  }
   if (!e.target.classList.contains("note") || !db || readOnly) return;
   const id = e.target.closest(".card").dataset.id;
   if ((ledger[id] || {}).note !== e.target.value) save(id, { note: e.target.value.trim() });
@@ -720,9 +879,65 @@ function askToken(reason) {
   });
 }
 
+// Thursday reminder: Web Push to this device. The subscription lives in state/push.json in the
+// private repo, and the remind workflow (remind.mjs) sends to it. Phone and Mac app only, not localhost.
+const VAPID_PUBLIC = "BKAy32F3n67kshOGmWFOgGm7qWSigqgBqMqvnCK2Mn1PJmONVt8ybUxCSr1XDnOdAzJbsUdefH5mkZRj1vCYIuw";
+const PUSH_OK = !LOCAL && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const b64url = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+
+async function saveSubs(change, message) {
+  for (let attempt = 0; ; attempt++) {
+    let f = null;
+    try { f = await gh(`/contents/state/push.json?ref=${GH.branch}`); } catch (e) { if (e.status !== 404) throw e; }
+    const list = change(f ? JSON.parse(b64decode(f.content)) : []);
+    try {
+      return await gh("/contents/state/push.json", { method: "PUT", body: {
+        message, content: b64encode(JSON.stringify(list, null, 1) + "\n"), branch: GH.branch, ...(f ? { sha: f.sha } : {}) } });
+    } catch (e) { if (e.status !== 409 || attempt) throw e; }
+  }
+}
+async function showRemind() {
+  const btn = $("remind");
+  if (!PUSH_OK) return;
+  const reg = await navigator.serviceWorker.register("sw.js");
+  const sub = await reg.pushManager.getSubscription();
+  btn.hidden = false;
+  btn.classList.toggle("on", !!sub);
+  btn.textContent = sub ? "Thursday reminder: on" : "Turn on Thursday reminder";
+  btn.title = sub ? "Tap to turn it off on this device" : "A push on Thursday with what is still open";
+}
+$("remind").addEventListener("click", async () => {
+  const btn = $("remind");
+  btn.disabled = true;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await saveSubs(list => list.filter(x => x.sub.endpoint !== sub.endpoint), `push: ${deviceName()} off`);
+      await sub.unsubscribe();
+      toast("Reminder off on this device");
+    } else {
+      // Ask first, straight from the tap: iOS only allows the prompt inside a user gesture
+      if (await Notification.requestPermission() !== "granted") { toast("Notifications are blocked for Radar"); return; }
+      const fresh = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64url(VAPID_PUBLIC) });
+      const entry = { device: deviceName(), added: today(), sub: fresh.toJSON() };
+      // Not saved means never sent, so don't leave the device looking subscribed
+      try { await saveSubs(list => [...list.filter(x => x.sub.endpoint !== fresh.endpoint), entry], `push: ${deviceName()} on`); }
+      catch (e) { await fresh.unsubscribe(); throw e; }
+      toast("Reminder on. Thursdays at noon");
+    }
+  } catch (e) {
+    toast("Could not change the reminder");
+  } finally {
+    btn.disabled = false;
+    showRemind();
+  }
+});
+
 function start() {
   if (!LOCAL && !token) return askToken();
   document.querySelector(".wrap > .gen").hidden = false;
+  showRemind().catch(() => {});
   load().catch(e => { if (e.status !== 401) $("week").textContent = "Could not load briefs. Check the connection."; });
   poll();
 }
