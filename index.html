@@ -60,6 +60,16 @@ code { font: 0.84em var(--f-mono); color: #CFE9DA; background: #121916; padding:
 .topbar .brand { display: inline-flex; gap: 10px; align-items: center; color: var(--ink); }
 .topbar .brand i { width: 7px; height: 7px; background: var(--ph); box-shadow: 0 0 10px var(--ph); }
 .topbar .live { color: var(--ph); }
+.top { display: grid; gap: 8px; }
+.top-r { display: inline-flex; align-items: center; gap: 14px; }
+.topbar .gen-btn { font: 700 0.7rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; min-height: 36px; padding: 0 12px; border: 1px solid var(--ph); background: transparent; color: var(--ph); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.topbar .gen-btn::before { content: ">"; }
+.topbar .gen-btn:hover:not(:disabled) { background: var(--ph); color: #04120A; }
+.topbar .gen-btn:active:not(:disabled) { transform: translateY(1px); }
+.topbar .gen-btn:disabled { opacity: .55; cursor: default; }
+.run-line { margin: 0; font: 0.74rem/1.5 var(--f-mono); color: var(--muted); }
+.run-line:empty { display: none; }
+@media (max-width: 420px) { .topbar .live { display: none; } }
 
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px 40px; align-items: center; }
 .hero-text { display: grid; gap: 14px; min-width: 0; }
@@ -67,6 +77,13 @@ code { font: 0.84em var(--f-mono); color: #CFE9DA; background: #121916; padding:
 h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); font-stretch: 118%; letter-spacing: -0.035em; text-transform: uppercase; text-wrap: balance; }
 .sub { margin: 0; color: var(--muted); font: 0.82rem/1.5 var(--f-mono); letter-spacing: 0.02em; }
 .sub b { color: var(--ink); font-weight: 500; }
+.hero-act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-top: 4px; }
+.hero-act:empty { display: none; }
+.hero-act .go { font: 700 0.76rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; min-height: 44px; padding: 0 16px; border: 0; background: var(--ph); color: #04120A; cursor: pointer; }
+.hero-act .go:hover { background: #8BFFB9; }
+.hero-act .go:active { transform: translateY(1px); }
+.hero-act .peek { font: 500 0.72rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: none; border: 0; padding: 12px 0; cursor: pointer; }
+.hero-act .peek:hover { color: var(--ink); }
 .weeks { display: flex; flex-wrap: wrap; gap: 0; margin-top: 6px; }
 .weeks:empty { display: none; }
 .weeks button { font: 500 0.74rem var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 12px; border: 1px solid var(--line-2); background: transparent; color: var(--muted); cursor: pointer; margin-left: -1px; }
@@ -102,8 +119,7 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 
 @media (max-width: 700px) {
   .hero { grid-template-columns: 1fr; }
-  .meter { order: -1; }
-  .scope { width: min(100%, 360px); justify-self: center; }
+  .scope { width: min(100%, 320px); justify-self: center; }
 }
 
 #main { margin: 0; width: 100%; }
@@ -210,6 +226,18 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 .also li { counter-increment: a; display: grid; grid-template-columns: 34px 1fr; gap: 2px 6px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .also li::before { content: counter(a, decimal-leading-zero); grid-row: span 2; font: 0.72rem/1.9 var(--f-mono); color: var(--dim); }
 .also .note-text { color: var(--muted); font-size: 0.9rem; }
+.also:not(.all) li:nth-child(n+4) { display: none; }
+.also .peek { font: 500 0.72rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: none; border: 0; padding: 14px 0 0; cursor: pointer; }
+.also .peek:hover { color: var(--ink); }
+/* Upkeep details, folded into one line */
+.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; min-height: 44px; border-top: 1px solid var(--line); font: 500 0.7rem/1.3 var(--f-mono); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after { content: "›"; margin-left: auto; font-size: 1rem; }
+.fold > summary:hover { color: var(--ink); }
+.fold[open] > summary { color: var(--ink); margin-bottom: 12px; }
+.fold[open] > summary::after { transform: rotate(90deg); }
+.fold .err { color: var(--open); }
+.fold .foot { margin-top: 14px; }
 .direction { margin: 0; max-width: 64ch; font-size: 1.02rem; }
 
 /* ---------- Rolled out / sources ---------- */
@@ -240,6 +268,7 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 .empty strong { color: var(--ink); font: 700 1.3rem/1.15 var(--f-display); font-stretch: 110%; }
 .gen { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .wrap > .gen { padding-top: 24px; border-top: 1px solid var(--line-2); }
+.wrap > .gen:has(> #remind[hidden]) { display: none; }
 .gen button { font: 700 0.78rem var(--f-mono); letter-spacing: .12em; text-transform: uppercase; padding: 13px 18px; border: 1px solid var(--ph); background: transparent; color: var(--ph); cursor: pointer; display: inline-flex; gap: 10px; align-items: center; }
 .gen button::before { content: ">"; }
 .gen button::after { content: ""; width: 7px; height: 1em; background: currentColor; }
@@ -276,8 +305,12 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .sweep { animation: spin 4s linear infinite; }
-  .blip .halo { animation: ping 4s ease-out infinite; animation-delay: var(--d, 0s); transform-box: fill-box; transform-origin: center; }
+  .scope.run .sweep { animation: spin 4s linear 3; }
+  .blip .halo { transform-box: fill-box; transform-origin: center; }
+  .scope.run .blip .halo { animation: ping 4s ease-out 3; animation-delay: var(--d, 0s); }
+  .fold > summary::after { transition: transform .2s ease; }
+  .rv { opacity: 0; transform: translateY(14px); transition: opacity .6s ease-out, transform .6s cubic-bezier(.2,.7,.2,1); }
+  .rv.in { opacity: 1; transform: none; }
   .blip .core { transition: r .15s; }
   .topbar .live::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; background: var(--ph); animation: blink 1.2s steps(2) infinite; }
   .gen button::after { animation: blink 1s steps(2) infinite; }
@@ -295,12 +328,17 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 </style>
 
 <div class="wrap">
-  <div class="topbar"><span class="brand"><i></i>Radar</span><span class="live" id="clock">Scanning</span></div>
+  <div class="top">
+    <div class="topbar"><span class="brand"><i></i>Radar</span>
+      <span class="top-r"><span class="live" id="clock">Scanning</span><button type="button" class="gen-btn" id="gen" hidden>Generate</button></span></div>
+    <p class="run-line" id="run-state" role="status"></p>
+  </div>
   <header class="hero">
     <div class="hero-text">
       <p class="kicker" id="kicker">Weekly brief</p>
       <h1 id="week">Loading briefs…</h1>
       <p class="sub" id="sub"></p>
+      <div class="hero-act" id="hero-act"></div>
       <nav class="weeks" id="weeks" aria-label="Briefs"></nav>
     </div>
     <div class="meter" id="meter" hidden>
@@ -311,12 +349,10 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
   <main id="main" class="wrap" style="padding:0;max-width:none">
     <div class="empty">
       <strong>Your weekly brief shows up here</strong>
-      <span>Press <b>Generate new brief</b>, or run <code>/radar</code> in <code>~/radar</code>. Each run adds up to three things worth trying, each with a 15-minute action.</span>
+      <span>Press <b>Generate</b> at the top, or run <code>/radar</code> in <code>~/radar</code>. Each run adds up to three things worth trying, each with a 15-minute action.</span>
     </div>
   </main>
   <footer class="gen">
-    <button type="button" id="gen">Generate new brief</button>
-    <span class="run-state" id="run-state" role="status"></span>
     <button type="button" class="mini" id="remind" hidden>Thursday reminder</button>
   </footer>
 </div>
@@ -346,9 +382,16 @@ function toast(msg) {
   clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 1800);
 }
 
+// The sweep turns a few times, then rests. It turns again when a status changes or you tap the scope.
+function sweep() {
+  const sc = document.querySelector(".scope");
+  sc.classList.remove("run"); void sc.offsetWidth; sc.classList.add("run");
+}
 function renderMeter() {
   const items = Object.values(ledger);
   if (!items.length) { $("meter").hidden = true; return; }
+  const sig = items.map(i => i.status).join();
+  if (sig !== renderMeter.sig) { renderMeter.sig = sig; sweep(); }
   const n = s => items.filter(i => i.status === s).length;
   const order = ["adopted", "tried", "open", "skipped"];
   // Scope: every ledger item is a blip. Agents on the left half, GTM on the right.
@@ -444,13 +487,26 @@ function render() {
   if (!briefs.length) { nav.innerHTML = ""; $("week").textContent = "No briefs yet"; renderMeter(); return; }
   if (!briefs.find(b => b.id === current)) current = briefs[0].id;
   const b = briefs.find(x => x.id === current);
-  $("week").textContent = "Week of " + shortDate(b.date);
-  const openCount = Object.values(ledger).filter(r => r.status === "open").length;
-  $("kicker").textContent = `W${isoWeek(b.date)} · ${niceDate(b.date)}`;
-  $("sub").innerHTML = `<b>${plural((b.cards || []).length, "contact")}</b> this week` + (openCount ? ` · <b>${openCount}</b> still open` : "");
+  // Lead with the job, not the date: what is open, and the one thing to start on
+  const openRows = Object.entries(ledger).filter(([, r]) => r.status === "open").sort((a, z) => a[1].added.localeCompare(z[1].added));
+  const openCount = openRows.length;
+  $("kicker").textContent = `W${isoWeek(b.date)} · ${niceDate(b.date)} · ${(b.cards || []).length} new`;
+  if (openCount) {
+    const [firstId, first] = openRows[0];
+    const age = Math.round((Date.now() - new Date(first.added + "T12:00:00")) / 864e5);
+    $("week").innerHTML = `${openCount} open.<br>Finish one.`;
+    $("sub").innerHTML = `Oldest first: <b>${esc(first.name)}</b>, open ${plural(age, "day")}.`;
+    $("hero-act").innerHTML = `<button type="button" class="go" data-do="${esc(firstId)}">${LOCAL ? "Start in Claude Code" : "Copy for Claude Code"}</button>
+      <button type="button" class="peek" data-blip="${esc(firstId)}">Show steps ›</button>`;
+  } else {
+    $("week").textContent = "All clear.";
+    $("sub").innerHTML = "Nothing open. Generate a brief when you want new ideas.";
+    $("hero-act").innerHTML = "";
+  }
   nav.innerHTML = briefs.length > 1 ? briefs.map(x => `<button type="button" data-week="${esc(x.id)}" aria-pressed="${x.id === current}" title="${esc(niceDate(x.date))}">${esc(shortDate(x.date))}</button>`).join("") : "";
   // Fade the cards in only when a week is first shown, not on every save
-  if (render.shown !== current) { render.shown = current; $("main").classList.add("entering"); setTimeout(() => $("main").classList.remove("entering"), 1200); }
+  const entering = render.shown !== current;
+  if (entering) { render.shown = current; $("main").classList.add("entering"); setTimeout(() => $("main").classList.remove("entering"), 1200); }
   renderMeter();
 
   const carry = Object.entries(ledger)
@@ -468,12 +524,13 @@ function render() {
       `<div class="carry-row" data-blip="${esc(id)}" role="button" tabindex="0"><i class="dot"></i><span class="name">${esc(r.name)}</span><span class="age">T+${days(r.added)}D</span></div>`).join("")}</section>` : ""}
     <section><p class="label">This week</p><div class="cards">${(b.cards || []).map((c, i) => renderCard(c, i).replace('<article ', `<article style="--i:${i}" `)).join("") ||
       `<div class="empty"><strong>Nothing passed the filter this week</strong><span>That is fine. Use the time on what is still open.</span></div>`}</div></section>
-    ${(b.also || []).length ? `<section class="also"><p class="label">Also noticed</p><ol>${b.also.map(a =>
-      `<li>${link(a)}${a.note ? `<span class="note-text">${fmt(a.note)}</span>` : ""}</li>`).join("")}</ol></section>` : ""}
-    ${b.direction ? `<section><p class="label">Direction check</p><p class="direction">${fmt(b.direction)}</p></section>` : ""}
+    ${(b.also || []).length ? `<section class="also rv${alsoAll ? " all" : ""}"><p class="label">Also noticed</p><ol>${b.also.map(a =>
+      `<li>${link(a)}${a.note ? `<span class="note-text">${fmt(a.note)}</span>` : ""}</li>`).join("")}</ol>
+      ${b.also.length > 3 ? `<button type="button" class="peek" data-also>${alsoAll ? "Show fewer" : `All ${b.also.length} ›`}</button>` : ""}</section>` : ""}
+    ${b.direction ? `<section class="rv"><p class="label">Direction check</p><p class="direction">${fmt(b.direction)}</p></section>` : ""}
     ${renderRollout()}
-    ${renderScore()}
-    <p class="foot"><b>SRC ERR</b> ${(b.errors || []).length ? esc(b.errors.join(" · ")) : "none"}</p>`;
+    ${renderScore(b)}`;
+  reveal(entering);
 
   for (const [id, v] of Object.entries(drafts)) { const n = $(id); if (n) n.value = v; }
   if (active && $(active)) $(active).focus();
@@ -501,7 +558,7 @@ function rolloutNote(month, items) {
 }
 function renderRollout() {
   const months = rollouts();
-  return `<section class="rollout"><p class="label">Rolled out</p>${months.length ? `
+  return `<section class="rollout rv"><p class="label">Rolled out</p>${months.length ? `
     <p class="lede">What you adopted, by month. Copy a month as a short note for colleagues.</p>
     ${months.map(([m, items]) => `<div class="month"><div class="month-head"><span>${esc(monthName(m))}</span>
       <button type="button" class="mini" data-copy-month="${esc(m)}">Copy note</button></div>
@@ -512,7 +569,15 @@ function renderRollout() {
 
 // Source scorecard: card outcomes are live from briefs + ledger, item counts come from scorecard.py
 let scoreState = {};
-function renderScore() {
+// Sections below the cards fade in once as they scroll into view; re-renders after a save show them straight away
+let alsoAll = false, srcOpen = false;
+const revealer = "IntersectionObserver" in window && new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add("in"); revealer.unobserve(e.target); }
+}), { rootMargin: "0px 0px -8% 0px" });
+function reveal(entering) {
+  document.querySelectorAll("#main .rv").forEach(el => entering && revealer ? revealer.observe(el) : el.classList.add("in"));
+}
+function renderScore(b) {
   const rows = {};
   const row = s => rows[s] ||= { items: 0, cards: 0, tried: 0, adopted: 0, skipped: 0 };
   for (const [s, n] of Object.entries(scoreState.collected || {})) row(s).items = n;
@@ -521,16 +586,18 @@ function renderScore() {
     r.cards++; if (st in r) r[st]++;
   }
   const all = Object.entries(rows);
-  if (!all.length) return "";
+  const errs = (b.errors || []).length;
+  if (!all.length && !errs) return "";
   const hits = all.filter(([, r]) => r.cards).sort((a, z) => z[1].adopted - a[1].adopted || z[1].tried - a[1].tried || z[1].cards - a[1].cards || z[1].items - a[1].items);
   const quiet = all.filter(([, r]) => !r.cards).sort((a, z) => z[1].items - a[1].items);
   const td = (n, cls) => `<td class="${n ? cls : ""}">${n}</td>`;
-  return `<section><p class="label">Sources</p>
+  return `<details class="fold rv" id="src"${srcOpen ? " open" : ""}><summary>Sources · ${all.length} tracked${errs ? ` · <span class="err">${plural(errs, "error")}</span>` : ""}</summary>
     <p class="lede">Which sources lead to things you adopt. The weekly run ranks by this and flags sources to drop.</p>
     ${hits.length ? `<div class="score-wrap"><table class="score"><thead><tr><th>Source</th><th>Items</th><th>Cards</th><th>Tried</th><th>Adopt</th><th>Skip</th></tr></thead><tbody>
       ${hits.map(([s, r]) => `<tr><td>${esc(s)}</td>${td(r.items, "s")}${td(r.cards, "n")}${td(r.tried, "n")}${td(r.adopted, "a")}${td(r.skipped, "s")}</tr>`).join("")}</tbody></table></div>` : ""}
     ${quiet.length ? `<p class="quiet"><b>No card yet:</b> ${quiet.map(([s, r]) => `${esc(s)} (${r.items})`).join(" · ")}</p>` : ""}
-  </section>`;
+    <p class="foot"><b>SRC ERR</b> ${errs ? esc(b.errors.join(" · ")) : "none"}</p>
+  </details>`;
 }
 
 // Do it now: the same prompt server.py's do_prompt() builds
@@ -697,9 +764,10 @@ async function poll() {
     return (poll.t = setTimeout(poll, e.status === 404 ? 300000 : 15000));
   }
   $("gen").disabled = st.running;
+  $("gen").textContent = st.running ? "Generating" : "Generate";
   if (st.running) {
     const mins = st.started ? Math.floor((Date.now() / 1000 - st.started) / 60) : null;
-    $("run-state").textContent = "Generating" + (mins !== null ? `, ${mins} min so far` : "") + ". Usually takes 5 to 15 min.";
+    $("run-state").textContent = "Generating a brief" + (mins !== null ? `, ${mins} min so far` : "") + ". Usually takes 5 to 15 min.";
   } else {
     $("run-state").textContent = st.code ? `Last run failed (${st.code}). ${st.where || ""}` : "";
     if (wasRunning) { current = null; await load(); toast("New brief ready"); }
@@ -715,6 +783,8 @@ $("gen").addEventListener("click", async () => {
 });
 
 document.addEventListener("click", e => {
+  if (e.target.closest("[data-also]")) { alsoAll = !alsoAll; render(); return; }
+  if (e.target.closest(".scope") && !e.target.closest("[data-blip]")) sweep();
   const w = e.target.closest("[data-week]");
   if (w) { current = w.dataset.week; try { localStorage.setItem("radar.week", current); } catch (_) {} render(); return; }
   const s = e.target.closest(".seg button");
@@ -739,6 +809,7 @@ document.addEventListener("click", e => {
     copy(rolloutNote(m.dataset.copyMonth, items)).then(ok => toast(ok ? "Note copied" : "Copy was blocked"));
   }
 });
+document.addEventListener("toggle", e => { if (e.target.id === "src") srcOpen = e.target.open; }, true);
 function focusItem(id) {
   const hit = cardOf(id);
   if (!hit) return;
@@ -811,6 +882,8 @@ function askToken(reason) {
   $("meter").hidden = true;
   $("weeks").innerHTML = "";
   document.querySelector(".wrap > .gen").hidden = true;
+  $("gen").hidden = true;
+  $("hero-act").innerHTML = "";
   $("kicker").textContent = reason === "expired" ? "Reconnect" : "Setup · about 1 minute";
   $("week").textContent = reason === "expired" ? "Your key stopped working" : "Connect this device";
   $("sub").innerHTML = reason === "expired"
@@ -937,6 +1010,7 @@ $("remind").addEventListener("click", async () => {
 function start() {
   if (!LOCAL && !token) return askToken();
   document.querySelector(".wrap > .gen").hidden = false;
+  $("gen").hidden = false;
   showRemind().catch(() => {});
   load().catch(e => { if (e.status !== 401) $("week").textContent = "Could not load briefs. Check the connection."; });
   poll();
