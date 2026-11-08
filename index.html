@@ -221,6 +221,37 @@ h1 { margin: 0; font: 800 clamp(2.4rem, 8.4vw, 4.4rem)/0.9 var(--f-display); fon
 .do-now:hover:not(:disabled) { background: var(--ph); color: #04120A; }
 .hint { font: 0.72rem var(--f-mono); color: var(--dim); letter-spacing: .04em; }
 
+/* ---------- Learn: talks and lessons, a horizontal row that peeks ---------- */
+.learn-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.learn-head .label { margin: 0; flex: 1; }
+.learn-nav { display: none; gap: 0; }
+.learn-nav button { width: 36px; height: 32px; font: 500 0.9rem var(--f-mono); border: 1px solid var(--line-2); margin-left: -1px; background: transparent; color: var(--muted); cursor: pointer; }
+.learn-nav button:hover { color: var(--ph); border-color: var(--ph); position: relative; z-index: 1; }
+@media (hover: hover) and (min-width: 700px) { .learn-nav { display: inline-flex; } }
+.learn-row { display: grid; grid-auto-flow: column; grid-auto-columns: min(82%, 340px); gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px;
+  margin: 0 -16px; padding: 2px 16px 10px; scrollbar-width: none; }
+.learn-row::-webkit-scrollbar { display: none; }
+.lt { scroll-snap-align: start; display: grid; align-content: start; gap: 10px; min-width: 0; }
+.lt-media { position: relative; aspect-ratio: 16 / 9; background: var(--panel); border: 1px solid var(--line-2); overflow: hidden; }
+.lt-media iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.lt-play { position: absolute; inset: 0; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.lt-play img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.75) brightness(.82); }
+.lt-play::after { content: ""; position: absolute; left: 12px; bottom: 12px; width: 44px; height: 44px; background: var(--ph)
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z' fill='%2304120A'/%3E%3C/svg%3E") center / 22px no-repeat; }
+.lt-play:hover img, .lt-play:focus-visible img { filter: none; }
+.lt-play .len { position: absolute; right: 8px; bottom: 8px; font: 500 0.68rem var(--f-mono); letter-spacing: .06em; background: rgba(4,8,6,.85); color: var(--ink); padding: 3px 6px; }
+.lt-meta { font: 500 0.68rem/1.4 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0 10px; }
+.lt-meta .trk { color: var(--ph); }
+.lt-meta .trk.growth { color: var(--tried); }
+.lt-meta .trk.gtm { color: var(--open); }
+.lt h3 { margin: 0; font: 700 1.08rem/1.22 var(--f-display); font-stretch: 104%; text-wrap: pretty; }
+.lt h3 a { text-decoration: none; }
+.lt .why { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.lt .take { margin: 0; padding: 10px 12px; border-left: 2px solid var(--ph); background: var(--panel); font-size: 0.9rem; }
+.lt .take b { display: block; font: 500 0.64rem var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ph); margin-bottom: 2px; }
+.lt .mini { justify-self: start; }
+.lt.done .lt-media, .lt.done h3, .lt.done .why, .lt.done .take { opacity: .45; }
+
 /* ---------- Also / direction / footer ---------- */
 .also ol { margin: 0; padding: 0; list-style: none; counter-reset: a; }
 .also li { counter-increment: a; display: grid; grid-template-columns: 34px 1fr; gap: 2px 6px; padding: 12px 0; border-bottom: 1px solid var(--line); }
@@ -524,6 +555,7 @@ function render() {
       `<div class="carry-row" data-blip="${esc(id)}" role="button" tabindex="0"><i class="dot"></i><span class="name">${esc(r.name)}</span><span class="age">T+${days(r.added)}D</span></div>`).join("")}</section>` : ""}
     <section><p class="label">This week</p><div class="cards">${(b.cards || []).map((c, i) => renderCard(c, i).replace('<article ', `<article style="--i:${i}" `)).join("") ||
       `<div class="empty"><strong>Nothing passed the filter this week</strong><span>That is fine. Use the time on what is still open.</span></div>`}</div></section>
+    ${renderLearn(b)}
     ${(b.also || []).length ? `<section class="also rv${alsoAll ? " all" : ""}"><p class="label">Also noticed</p><ol>${b.also.map(a =>
       `<li>${link(a)}${a.note ? `<span class="note-text">${fmt(a.note)}</span>` : ""}</li>`).join("")}</ol>
       ${b.also.length > 3 ? `<button type="button" class="peek" data-also>${alsoAll ? "Show fewer" : `All ${b.also.length} ›`}</button>` : ""}</section>` : ""}
@@ -534,6 +566,37 @@ function render() {
 
   for (const [id, v] of Object.entries(drafts)) { const n = $(id); if (n) n.value = v; }
   if (active && $(active)) $(active).focus();
+}
+
+// Learn picks: watched state is a per-device convenience, not ledger data
+let watched = new Set();
+try { watched = new Set(JSON.parse(localStorage.getItem("radar.watched") || "[]")); } catch (e) {}
+const ytId = v => /^[\w-]{11}$/.test(v || "") ? v : "";
+function renderLearn(b) {
+  const items = b.learn || [];
+  if (!items.length) return "";
+  const left = items.filter(l => !watched.has(l.id)).length;
+  return `<section class="learn rv"><div class="learn-head"><p class="label">Learn · ${left ? `${left} to watch` : "all watched"}</p>
+      <span class="learn-nav"><button type="button" data-learn-step="-1" aria-label="Previous">‹</button><button type="button" data-learn-step="1" aria-label="Next">›</button></span></div>
+    <div class="learn-row" id="learn-row">${items.map(l => {
+      const vid = ytId(l.video_id), done = watched.has(l.id);
+      const media = vid ? `<div class="lt-media" id="media-${esc(l.id)}"><button type="button" class="lt-play" data-play="${esc(l.id)}" aria-label="Play ${esc(l.title)}">
+          <img src="https://i.ytimg.com/vi/${vid}/hqdefault.jpg" alt="" loading="lazy">${l.minutes ? `<span class="len">${esc(l.minutes)} min</span>` : ""}</button></div>` : "";
+      return `<article class="lt${done ? " done" : ""}">${media}
+        <div class="lt-meta"><span class="trk ${esc(l.track)}">${esc(l.track)}</span><span>${esc(l.kind || "talk")}</span><span>${esc(l.channel || "")}</span></div>
+        <h3><a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener">${esc(l.title)}</a></h3>
+        ${l.why ? `<p class="why">${fmt(l.why)}</p>` : ""}
+        ${l.takeaway ? `<p class="take"><b>Take away</b>${fmt(l.takeaway)}</p>` : ""}
+        <button type="button" class="mini${done ? " on" : ""}" data-watched="${esc(l.id)}" aria-pressed="${done}">${done ? "Watched" : "Mark watched"}</button>
+      </article>`;
+    }).join("")}</div></section>`;
+}
+function playLearn(id) {
+  const hit = briefs.flatMap(b => b.learn || []).find(l => l.id === id), box = $("media-" + id);
+  if (!hit || !box) return;
+  const start = Number(hit.start) > 0 ? `&start=${Math.floor(hit.start)}` : "";
+  box.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(hit.video_id)}?autoplay=1&rel=0&playsinline=1${start}" title="${esc(hit.title)}"
+    allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
 }
 
 // Proof is one ledger cell: "what changed · link"
@@ -784,6 +847,23 @@ $("gen").addEventListener("click", async () => {
 
 document.addEventListener("click", e => {
   if (e.target.closest("[data-also]")) { alsoAll = !alsoAll; render(); return; }
+  const pl = e.target.closest("[data-play]");
+  if (pl) { playLearn(pl.dataset.play); return; }
+  const wt = e.target.closest("[data-watched]");
+  if (wt) {
+    const id = wt.dataset.watched, row = $("learn-row"), x = row ? row.scrollLeft : 0;
+    watched.has(id) ? watched.delete(id) : watched.add(id);
+    try { localStorage.setItem("radar.watched", JSON.stringify([...watched])); } catch (_) {}
+    // Patch in place so a playing video keeps playing
+    const tile = wt.closest(".lt"), on = watched.has(id);
+    tile.classList.toggle("done", on); wt.classList.toggle("on", on); wt.setAttribute("aria-pressed", on); wt.textContent = on ? "Watched" : "Mark watched";
+    const b = briefs.find(z => z.id === current), left = (b.learn || []).filter(l => !watched.has(l.id)).length;
+    const lab = tile.closest(".learn").querySelector(".label"); lab.textContent = `Learn · ${left ? `${left} to watch` : "all watched"}`;
+    if (row) row.scrollLeft = x;
+    return;
+  }
+  const ls = e.target.closest("[data-learn-step]");
+  if (ls) { const row = $("learn-row"), t = row && row.querySelector(".lt"); if (t) row.scrollBy({ left: Number(ls.dataset.learnStep) * (t.offsetWidth + 18), behavior: "smooth" }); return; }
   if (e.target.closest(".scope") && !e.target.closest("[data-blip]")) sweep();
   const w = e.target.closest("[data-week]");
   if (w) { current = w.dataset.week; try { localStorage.setItem("radar.week", current); } catch (_) {} render(); return; }
